@@ -1,6 +1,6 @@
 # 车载远程生理监测 rPPG 项目
 
-本文件是项目的操作入口。详细研究计划见 [`readme_guide.md`](./readme_guide.md)；文献与数据集调研见
+本文件是项目的操作入口。文献与数据集调研见
 [`docs/research/in_vehicle_rppg_survey.md`](./docs/research/in_vehicle_rppg_survey.md)。
 
 目标：面向真实驾驶环境（运动、动态光照、夜间/近红外、道路振动），实现稳健的摄像头 rPPG，
