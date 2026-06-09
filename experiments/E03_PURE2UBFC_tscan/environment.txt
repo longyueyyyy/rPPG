@@ -1,0 +1,6 @@
+exp_id: E03_PURE2UBFC_tscan
+config: /home/lsg/rPPG/configs/repro/PURE_UBFC_subset_TSCAN.yaml
+date: 2026-06-02T18:10:14+08:00
+python: Python 3.8.20
+torch: 2.1.2+cu118 11.8
+toolbox_commit: b7500b848f84ad7f86e277b4612563b69f4f88f9
