@@ -1,6 +1,7 @@
 .claude/
 .vscode/
 readme_guide.md
+README_GUIDE_lsg.md
 
 __pycache__/
 *.pyc
