@@ -1,0 +1,6 @@
+exp_id: E12_PURE2UBFC_physnet_full
+config: /home/lsg/rPPG/configs/repro/UBFC_full_PHYSNET.yaml
+date: 2026-06-26T19:51:30+08:00
+python: Python 3.8.20
+torch: 2.1.2+cu118 11.8
+toolbox_commit: 2a3cad9a164789ee0deea38cf373b119b86ccfb4

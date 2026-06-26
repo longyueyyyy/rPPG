@@ -1,6 +1,0 @@
-exp_id: E01_unsup_UBFCsubset
-config: /home/lsg/rPPG/configs/repro/UBFC_subset_UNSUPERVISED.yaml
-date: 2026-06-02T18:07:13+08:00
-python: Python 3.8.20
-torch: 2.1.2+cu118 11.8
-toolbox_commit: b7500b848f84ad7f86e277b4612563b69f4f88f9

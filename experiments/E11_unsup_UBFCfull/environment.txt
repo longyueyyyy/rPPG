@@ -1,0 +1,6 @@
+exp_id: E11_unsup_UBFCfull
+config: /home/lsg/rPPG/configs/repro/UBFC_full_UNSUPERVISED.yaml
+date: 2026-06-26T19:36:42+08:00
+python: Python 3.8.20
+torch: 2.1.2+cu118 11.8
+toolbox_commit: 2a3cad9a164789ee0deea38cf373b119b86ccfb4
