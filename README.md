@@ -49,7 +49,7 @@
 
 ## 仓库结构
 
-这个 Git 仓库只跟踪项目骨架。数据集、`external/rPPG-Toolbox`、日志、模型权重都不入库（见 `.gitignore`），它们在计算服务器 `/home/lsg/rPPG` 上。
+这个 Git 仓库只跟踪项目骨架。数据集、`external/rPPG-Toolbox`、日志、模型权重都不入库（见 `.gitignore`），在各机器本地按约定存放，不随仓库分发。
 
 ```
 configs/repro/        复现用 YAML 配置（子集路径）
@@ -59,15 +59,15 @@ reports/baseline_benchmark/report.md    首次复现报告
 scripts/setup/         环境搭建（setup_env.sh、依赖清单）
 scripts/download/      数据下载（get_ubfc_subset.sh）
 scripts/repro/         运行与解析（run_one.sh、run_extra_neural.sh、parse_metrics.py）
-external/rPPG-Toolbox/  上游工具箱（仅服务器，固定 commit b7500b8）
-data/                  数据集（仅服务器，不入库）
+external/rPPG-Toolbox/  上游工具箱（不入库，固定 commit b7500b8）
+data/                  数据集缓存目录（不入库；也可指向仓库外的数据盘）
 ```
 
 ## 运行环境
 
-conda 环境 `rppg`（Python 3.8.20，torch 2.1.2+cu118），由 [`scripts/setup/setup_env.sh`](scripts/setup/setup_env.sh) 构建。相对工具箱自带 `setup.sh` 有两处本机改动：
+conda 环境 `rppg`（Python 3.8，torch 2.1.2+cu118），由 [`scripts/setup/setup_env.sh`](scripts/setup/setup_env.sh)（Linux）或 [`scripts/setup/setup_env.ps1`](scripts/setup/setup_env.ps1)（Windows）构建。相对工具箱自带 `setup.sh` 有两处改动：
 
-- **用 CUDA 11.8 而非 12.1**。本机驱动 `470.256.02`（最高支持 CUDA 11.4），装 `torch+cu121` 需要驱动 ≥525 会失败。改装 `torch==2.1.2+cu118`，靠 CUDA 小版本兼容性跑在 11.4 驱动上（已验证 `torch.cuda.is_available()` 为 True，4 张 RTX 3090 可用）。
+- **用 CUDA 11.8 而非工具箱默认的 12.1**。在驱动较旧的机器上 `torch+cu121` 需要驱动 ≥525 会失败；`torch==2.1.2+cu118` 通过 CUDA 小版本兼容性适配范围更广，新旧驱动都能用（已在 RTX 3090 与 RTX 4060 上验证 `torch.cuda.is_available()` 为 True）。
 - **跳过 `mamba-ssm` / `causal-conv1d`**。两者需要 nvcc 工具链，且只有 PhysMamba 用到；`PhysMamba.py` 的 `from mamba_ssm import Mamba` 已用 try/except 保护，因此除 PhysMamba 外所有模型正常导入。
 
 ```bash

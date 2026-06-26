@@ -22,3 +22,9 @@ logs/
 checkpoints/
 
 .DS_Store
+
+# 克隆的上游工具箱、机器本地配置与个人记录（不属于项目仓库）
+external/
+configs/local/
+*_lsg.md
+external/rPPG-Toolbox
