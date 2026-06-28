@@ -1,0 +1,6 @@
+exp_id: E24_MRNIRP_NIR_deepphys
+config: /home/lsg/rPPG/configs/repro/MRNIRP_NIR_DEEPPHYS.yaml
+date: 2026-06-28T13:47:41+08:00
+python: Python 3.8.20
+torch: 2.1.2+cu118 11.8
+toolbox_commit: 78ef00ab712a8536174cfcdcfb2d07283f8c601e

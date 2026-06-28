@@ -47,19 +47,52 @@
 - **EfficientPhys 的"异常"在全集上消失了**：子集（n=4）上它是 MAE 16.04、Pearson −0.14（曾标为待查），全集上变成 MAE 2.68、Pearson 0.867，完全正常。证实那是小样本下"负相关≈噪声"的假象，不是模型或推理归一化的问题。
 - 全集让模型之间有了区分度：子集上四个网络都落到同一 FFT 频点、MAE 完全相同（0.88），全集上正常分开（DeepPhys / PhysFormer / TS-CAN ≈1.3，PhysNet / EfficientPhys ≈2.7）。
 
+## 车载初探：MR-NIRP (Driving) 试点
+
+2026-06-28 在 [MR-NIRP Car](docs/research/in_vehicle_rppg_survey.md) 上跑通第一批车载数据——这是项目从实验室转向真实行车的第一步。工具箱没有 MR-NIRP 加载器，自己写了一个（`scripts/mrnirp/`）。用 PURE 预训练权重跨库推理，**NIR 与 RGB 两个成像通道都跑**，方法同 UBFC（无监督 + 5 个神经网络）。汇总见 [`reports/baseline_benchmark/mrnirp_pilot_summary.md`](reports/baseline_benchmark/mrnirp_pilot_summary.md)。
+
+数据是**部分下载**（完整 190 段视频里大部分没下；详见 [审计清单](reports/baseline_benchmark/mrnirp_unusable_list.txt)）。删掉损坏/残片、并从官方 Drive 补齐缺失真值后，**可用视频+真值 NIR n=23、RGB n=29**（覆盖 Subject 1/3/10/11/14–19），每会话截取前 ~150 s。
+
+**RGB 通道**（去 Bayer，n=29）：
+
+| 方法 | MAE (bpm) | Pearson r | MACC | |
+|---|---:|---:|---:|---|
+| POS | 13.96 | 0.55 | 0.18 | 无监督 |
+| CHROM | 14.16 | 0.44 | 0.17 | 无监督 |
+| PhysFormer | 17.77 | 0.31 | 0.16 | 神经网络 |
+| PBV | 18.87 | 0.35 | 0.16 | 无监督 |
+| DeepPhys | 20.52 | 0.16 | 0.16 | 神经网络 |
+| PhysNet | 23.66 | −0.01 | 0.15 | 神经网络 |
+| TS-CAN | 24.70 | −0.08 | 0.14 | 神经网络 |
+| EfficientPhys | 33.38 | −0.17 | 0.14 | 神经网络 |
+
+（其余无监督：ICA 22.77 / LGI 22.59 / OMIT 22.62 / GREEN 24.28，均明显差于 POS/CHROM。）
+
+**NIR 通道**（n=23）：所有方法基本失效——PhysNet 22.13（最好）、GREEN 24.21，DeepPhys / EfficientPhys / PhysFormer / TS-CAN 26–28，MACC ~0.14–0.15、Pearson ≈ 0。
+
+要点：
+
+- **实验室→车载断崖式掉点**：同一批方法在 UBFC 全集上 MAE ~1–3.5、MACC ~0.8，到了车载 RGB 变成 **MAE ~14–33、MACC ~0.15**。这正是项目要量化的泛化鸿沟。
+- **RGB ≫ NIR**：单通道 NIR 上一切都失效（色度方法在复制成 3 通道后退化，只有 GREEN 有意义，但车内弱信号 + 暗帧让它也只有 MAE ~24）；RGB 虽被近红外照明污染，仍保留可用脉搏信号（最好 POS 13.96）。
+- **车载里传统反超深度**：POS / CHROM（13.96 / 14.16）好过所有 PURE 预训练神经网络（最好 PhysFormer 17.77）——深度模型过拟合实验室域，跨到车载更脆。
+- **EfficientPhys 又是最差**（33.38，负相关），和 UBFC 上"对域偏移最敏感"一致。
+- **结论稳健、非单受试者假象**：把样本从最初偏向 Subject1 的 14/23 扩到更均衡的 23/29 后，上述排序与量级完全不变。
+- 绝对值都很差、MACC 极低，说明**现成方法直接搬到车载不可用**——质量门控（拒绝不可靠片段）和域适配是后续重点。
+
 ## 仓库结构
 
 这个 Git 仓库只跟踪项目骨架。数据集、`external/rPPG-Toolbox`、日志、模型权重都不入库（见 `.gitignore`），在各机器本地按约定存放，不随仓库分发。
 
 ```
-configs/repro/        复现用 YAML 配置（全集路径 UBFC_full_*.yaml）
+configs/repro/        复现用 YAML 配置（UBFC_full_*.yaml、MRNIRP_{NIR,RGB}_*.yaml）
 docs/research/        车载文献综述 + 已核实的数据集获取状态 + 参考文献
-experiments/E1*/       每个实验的 config + environment + metrics.json；汇总见 all_metrics_full.json
-reports/baseline_benchmark/full_ubfc_summary.md   全集（42 人）基准汇总表
+experiments/E1*/       UBFC 全集实验；E2*/E3* 为 MR-NIRP 试点。每个含 config + environment + metrics.json
+reports/baseline_benchmark/    full_ubfc_summary.md（UBFC 全集）、mrnirp_pilot_summary.md（MR-NIRP 试点）
 scripts/setup/         环境搭建（setup_env.sh、依赖清单）
 scripts/download/      数据下载（get_ubfc_subset.sh）
 scripts/repro/         运行与解析（run_full_ubfc.sh、run_one.sh、build_full_summary.py、parse_metrics.py）
-external/rPPG-Toolbox/  上游工具箱（不入库，固定 commit b7500b8）
+scripts/mrnirp/        MR-NIRP 加载器与流程（MRNIRPLoader.py、install_into_toolbox.sh、generate_configs.py、run_mrnirp_pilot.sh）
+external/rPPG-Toolbox/  上游工具箱（不入库，固定 commit b7500b8；MR-NIRP 加载器由 install 脚本注入）
 /media/amdin/Drive1/rppg_data/ 数据集缓存目录（不入库；也可指向仓库外的数据盘）
 ```
 
@@ -105,9 +138,9 @@ python scripts/repro/parse_metrics.py logs/E11_unsup.log --kind unsupervised --l
 
 ## 下一步
 
-UBFC 全集基准已跑通（见上），EfficientPhys 的子集异常也已确认是小样本假象。接下来按优先级：
+UBFC 全集基准已跑通、MR-NIRP 车载试点也拿到第一批掉点数字（见上）。接下来按优先级：
 
-1. **并行提交受限数据集申请**——PURE、MMPD（教职工协议）、PhysDrive 原始数据、CHILL EULA。真正的关键路径是审批延迟而非下载，越早发越好。
-2. **加跨数据集压力测试**：UBFC / PURE → MMPD，亲眼看到深度模型跨库掉点（这才是车载落地真正在意的泛化）。
-3. **写 PhysDrive 加载器适配**（HF 格式是 `RGB.mp4` + 会话 `AS/AT/...`，工具箱加载器期望 `Align/*.png` + `A1/A2/...`），拿到第一批车载数字和"实验室→车载"的掉点——这是项目的核心动机。
-4. **启动质量门控（Stage 2）**：基于已保存的 BVP 波形输出做 SQI + 拒绝机制，在工具箱现有的 `reject<0.5` 门控基础上扩展为带校准的质量评分与选择性预测（综述第 4 节指出的创新空白）。
+1. **MR-NIRP 按条件细分 / 继续补数据**：缺失真值已补齐（现 video+GT 为 NIR 23 / RGB 29 个会话），下一步按条件分解指标（still / small / large motion、driving vs garage），看运动与场景对掉点的影响，而非现在的混合均值；想要群体级结论还需从官方 Drive 补下更多视频（完整 190 段大部分未下）。
+2. **启动质量门控（Stage 2）**：车载绝对误差大、MACC 极低，最该做的是 SQI + 拒绝机制——基于已保存的 BVP 波形输出，在工具箱现有的 `reject<0.5` 门控上扩展为带校准的质量评分与选择性预测（综述第 4 节的创新空白）。
+3. **并行提交受限数据集申请**——PURE、MMPD（教职工协议）、PhysDrive 原始数据、CHILL EULA。关键路径是审批延迟而非下载，越早发越好。
+4. **写 PhysDrive 加载器适配**（HF 格式是 `RGB.mp4` + 会话 `AS/AT/...`，工具箱加载器期望 `Align/*.png` + `A1/A2/...`），拿到另一个车载数据集的对照。

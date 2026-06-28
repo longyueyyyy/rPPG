@@ -1,0 +1,38 @@
+MR-NIRP Car (driving) 数据集审计与清理记录
+============================================================
+数据盘: /media/amdin/Drive1/rppg_data/MR-NIRP_Car_driving
+完整数据集约 1.9 TB（19 受试者 × ~10 条件 × NIR~6.5G + RGB~3.5G + PulseOX）。
+本机为别人上传的**部分下载**，且下载过程多次中断，留下大量残片。
+
+== 审计发现（清理前，185 个会话文件夹）==
+- 只有 27 个会话能跑（视频 + 真值齐全）
+- 111 个只有真值、没视频（大文件未下）
+- 34 个文件夹完全空
+- 13 个有视频但缺真值（下了视频却没真值，无法评分）
+- 19 受试者里只有 10 个有可用会话
+- 严重偏向 Subject1（9 个 NIR + 9 个 RGB 可用，占 NIR 样本 ~64%）
+
+问题文件：
+- 27 个 .part 未完成下载残片（~17.8 GB）
+- 2 个截断/损坏的 NIR.zip：
+    Subject2/subject2_driving_small_motion_940/NIR.zip
+    Subject2/subject2_driving_large_motion_975/NIR.zip
+- 1 个真值文件名大小写写错（源数据本身就有）：
+    Subject1/subject1_driving_large_motion_975/PulseOx.zip  (应为 PulseOX.zip)
+
+好消息：凡是存在的真值都干净（138 个 PulseOX 全部可载入、非平直、HR 在 40–180）；
+能打开的视频 zip 内部完整（无截断帧、无空 zip）。
+
+== 已执行的清理（2026-06-28）==
+- 删除 27 个 .part 残片 + 2 个损坏 NIR.zip + 34 个空文件夹（释放 ~17 GB）
+- 加载器改为大小写不敏感识别真值（_find_pox），救活 subject1 那个被错名会话
+- 从官方 Google Drive（folder 1U3fzIOESmaBAyikGF0cKI2wW3YK8JqCK）补齐 12 个缺失真值
+
+== 清理后状态 ==
+- 可用 video+GT：NIR 23 个 / RGB 29 个会话（覆盖 Subject 1/3/10/11/14–19）
+- 有视频无真值的孤儿：0
+- 样本不再单受试者主导（Subject1 占比从 ~64% 降到 ~40%）
+
+== 仍存在的限制 ==
+- 完整 190 段视频里大部分仍未下载（本机仅 ~27 段有视频）；要群体级结论需继续补下视频
+- NIR 部分会话有整段近黑帧、RGB 颜色被近红外照明污染（数据本身的质量问题，非 bug）
